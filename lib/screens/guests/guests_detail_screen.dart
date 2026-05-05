@@ -375,31 +375,32 @@ class _GuestsDetailScreenState extends ConsumerState<GuestsDetailScreen> {
                 ),
               ),
 
-              // Relation filter
-              SizedBox(
-                height: 48,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
-                  children: [
-                    _FilterChip(
-                      label: 'All',
-                      selected: _filterRelation == null,
-                      onTap: () => setState(() => _filterRelation = null),
-                    ),
-                    ...allRelations.map((rel) => Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: _FilterChip(
-                            label: rel,
-                            color: AppColors.primary,
-                            selected: _filterRelation == rel,
-                            onTap: () => setState(() => _filterRelation =
-                                _filterRelation == rel ? null : rel),
-                          ),
-                        )),
-                  ],
+              // Relation filter — only shown when there are categories to filter by
+              if (allRelations.isNotEmpty)
+                SizedBox(
+                  height: 48,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+                    children: [
+                      _FilterChip(
+                        label: 'All',
+                        selected: _filterRelation == null,
+                        onTap: () => setState(() => _filterRelation = null),
+                      ),
+                      ...allRelations.map((rel) => Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: _FilterChip(
+                              label: rel,
+                              color: AppColors.primary,
+                              selected: _filterRelation == rel,
+                              onTap: () => setState(() => _filterRelation =
+                                  _filterRelation == rel ? null : rel),
+                            ),
+                          )),
+                    ],
+                  ),
                 ),
-              ),
 
               // Search bar
               Padding(
@@ -469,7 +470,6 @@ class _GuestsDetailScreenState extends ConsumerState<GuestsDetailScreen> {
                                 const SizedBox(height: 8),
                             itemBuilder: (_, i) => _GuestCell(
                               guests: groups[i],
-                              outerContext: context,
                             ),
                           );
                         }),
@@ -647,11 +647,9 @@ class _LegendRow extends StatelessWidget {
 
 class _GuestCell extends StatefulWidget {
   final List<Guest> guests;
-  final BuildContext outerContext;
 
   const _GuestCell({
     required this.guests,
-    required this.outerContext,
   });
 
   @override
@@ -861,7 +859,7 @@ class _RsvpDot extends StatelessWidget {
     final color = switch (status) {
       'confirmed' => AppColors.success,
       'declined'  => AppColors.danger,
-      _           => Colors.transparent,
+      _           => AppColors.inkMute.withAlpha(80),
     };
     return Container(
       width: 8,

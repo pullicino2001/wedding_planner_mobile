@@ -18,6 +18,7 @@ const _taskCategoryIcons = <String, IconData>{
   'Attire':          Icons.checkroom_outlined,
   'Guests':          Icons.people_outline,
   'Admin & Legal':   Icons.description_outlined,
+  'Honeymoon':       Icons.flight_outlined,
   'Day Of':          Icons.today_outlined,
   'Other':           Icons.more_horiz,
 };

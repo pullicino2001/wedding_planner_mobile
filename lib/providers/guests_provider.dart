@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/guest.dart';
-import '../core/constants/app_constants.dart';
 import 'sheets_service_provider.dart';
 import 'settings_provider.dart';
 
@@ -53,22 +52,6 @@ class GuestsNotifier extends StateNotifier<AsyncValue<List<Guest>>> {
     super.dispose();
   }
 
-  // Guest list is always read-only — these are no-ops kept for compile safety.
-  Future<void> addGuest({
-    required String firstName,
-    required String lastName,
-    String email = '',
-    String phone = '',
-    String rsvpStatus = AppConstants.rsvpPending,
-    String mealChoice = '',
-    String dietary = '',
-    bool hasPlusOne = false,
-    String relation = '',
-  }) async {}
-
-  Future<void> updateGuest(Guest guest) async {}
-
-  Future<void> deleteGuest(Guest guest) async {}
 }
 
 final guestsProvider =

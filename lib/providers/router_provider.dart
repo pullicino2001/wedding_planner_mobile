@@ -11,7 +11,6 @@ import '../screens/overview/overview_screen.dart';
 import '../screens/budget/budget_detail_screen.dart';
 import '../screens/budget/budget_form_screen.dart';
 import '../screens/guests/guests_detail_screen.dart';
-import '../screens/guests/guest_form_screen.dart';
 import '../screens/vendors/vendors_detail_screen.dart';
 import '../screens/vendors/vendor_form_screen.dart';
 import '../screens/vendors/vendor_profile_screen.dart';
@@ -19,7 +18,6 @@ import '../screens/timeline/timeline_detail_screen.dart';
 import '../screens/timeline/task_form_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../models/budget_item.dart';
-import '../models/guest.dart';
 import '../models/vendor.dart';
 import '../models/task_item.dart';
 
@@ -138,19 +136,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) {
           final item = state.extra as BudgetItem?;
           return BudgetFormScreen(existing: item);
-        },
-      ),
-
-      // ── Guest forms ────────────────────────────────────────────────────────
-      GoRoute(
-        path: '/guests/add',
-        builder: (_, _) => const GuestFormScreen(),
-      ),
-      GoRoute(
-        path: '/guests/edit/:rowId',
-        builder: (_, state) {
-          final guest = state.extra as Guest?;
-          return GuestFormScreen(existing: guest);
         },
       ),
 
