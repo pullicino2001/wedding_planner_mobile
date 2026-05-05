@@ -19,6 +19,7 @@ class AppShell extends StatelessWidget {
     '/home/guests',
     '/home/vendors',
     '/home/timeline',
+    '/home/dayof',
   ];
 
   static const _items = [
@@ -27,6 +28,7 @@ class AppShell extends StatelessWidget {
     _NavItem(icon: Icons.people_outline, label: 'Guests'),
     _NavItem(icon: Icons.store_outlined, label: 'Vendors'),
     _NavItem(icon: Icons.checklist_outlined, label: 'Timeline'),
+    _NavItem(icon: Icons.event_note_outlined, label: 'Day Of'),
   ];
 
   @override

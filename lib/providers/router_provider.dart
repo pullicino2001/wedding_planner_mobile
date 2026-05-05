@@ -17,9 +17,17 @@ import '../screens/vendors/vendor_profile_screen.dart';
 import '../screens/timeline/timeline_detail_screen.dart';
 import '../screens/timeline/task_form_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/day_of/day_of_screen.dart';
+import '../screens/day_of/running_order_form_screen.dart';
+import '../screens/day_of/team_member_form_screen.dart';
+import '../screens/day_of/team_member_brief_screen.dart';
+import '../screens/day_of/checklist_form_screen.dart';
 import '../models/budget_item.dart';
 import '../models/vendor.dart';
 import '../models/task_item.dart';
+import '../models/running_order_item.dart';
+import '../models/team_member.dart';
+import '../models/checklist_item.dart';
 
 // ─── Router notifier (bridges Riverpod auth state → GoRouter redirects) ──────
 
@@ -67,6 +75,7 @@ int _shellIndex(String location) {
   if (location.startsWith('/home/guests')) return 2;
   if (location.startsWith('/home/vendors')) return 3;
   if (location.startsWith('/home/timeline')) return 4;
+  if (location.startsWith('/home/dayof')) return 5;
   return 0; // overview
 }
 
@@ -123,6 +132,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/home/timeline',
             builder: (_, _) => const TimelineDetailScreen(),
           ),
+          GoRoute(
+            path: '/home/dayof',
+            builder: (_, _) => const DayOfScreen(),
+          ),
         ],
       ),
 
@@ -176,6 +189,49 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) {
           final task = state.extra as TaskItem?;
           return TaskFormScreen(existing: task);
+        },
+      ),
+
+      // ── Day Of routes ──────────────────────────────────────────────────────
+      GoRoute(
+        path: '/dayof/running-order/add',
+        builder: (_, _) => const RunningOrderFormScreen(),
+      ),
+      GoRoute(
+        path: '/dayof/running-order/edit/:id',
+        builder: (_, state) {
+          final item = state.extra as RunningOrderItem?;
+          return RunningOrderFormScreen(existing: item);
+        },
+      ),
+      GoRoute(
+        path: '/dayof/team/add',
+        builder: (_, _) => const TeamMemberFormScreen(),
+      ),
+      GoRoute(
+        path: '/dayof/team/edit/:id',
+        builder: (_, state) {
+          final member = state.extra as TeamMember?;
+          return TeamMemberFormScreen(existing: member);
+        },
+      ),
+      GoRoute(
+        path: '/dayof/team/brief/:id',
+        builder: (_, state) {
+          final member = state.extra as TeamMember?;
+          if (member == null) return const DayOfScreen();
+          return TeamMemberBriefScreen(member: member);
+        },
+      ),
+      GoRoute(
+        path: '/dayof/checklist/add',
+        builder: (_, _) => const ChecklistFormScreen(),
+      ),
+      GoRoute(
+        path: '/dayof/checklist/edit/:id',
+        builder: (_, state) {
+          final item = state.extra as ChecklistItem?;
+          return ChecklistFormScreen(existing: item);
         },
       ),
     ],

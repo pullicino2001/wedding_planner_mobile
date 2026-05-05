@@ -1,7 +1,10 @@
 import 'package:googleapis/sheets/v4.dart';
 import 'package:googleapis_auth/googleapis_auth.dart' show AuthClient;
 import '../../models/budget_item.dart';
+import '../../models/checklist_item.dart';
 import '../../models/guest.dart';
+import '../../models/running_order_item.dart';
+import '../../models/team_member.dart';
 import '../../models/vendor.dart';
 import '../../models/task_item.dart';
 
@@ -329,4 +332,122 @@ class SheetsService {
 
   Future<void> deleteTask(int rowNumber) =>
       _deleteRow('Tasks', rowNumber);
+
+  // ─────────────────────────── TAB CREATION ───────────────────────────
+
+  /// Creates a new sheet tab with headers if it doesn't already exist.
+  /// Safe to call repeatedly — is a no-op when the tab is already present.
+  Future<void> _ensureTabExists(
+      String tabName, List<String> headers) async {
+    final ss = await _api.spreadsheets.get(spreadsheetId);
+    final exists =
+        ss.sheets?.any((s) => s.properties?.title == tabName) ?? false;
+    if (exists) return;
+
+    await _api.spreadsheets.batchUpdate(
+      BatchUpdateSpreadsheetRequest(requests: [
+        Request(
+          addSheet: AddSheetRequest(
+            properties: SheetProperties(title: tabName),
+          ),
+        ),
+      ]),
+      spreadsheetId,
+    );
+
+    await _api.spreadsheets.values.update(
+      ValueRange(values: [headers]),
+      spreadsheetId,
+      '$tabName!A1',
+      valueInputOption: 'USER_ENTERED',
+    );
+  }
+
+  // ─────────────────────────── RUNNING ORDER ───────────────────────────
+
+  static const _kRunningOrderHeaders = [
+    'ID', 'Time', 'Phase', 'Description', 'Notes'
+  ];
+
+  Future<void> ensureRunningOrderTab() =>
+      _ensureTabExists('RunningOrder', _kRunningOrderHeaders);
+
+  Future<List<RunningOrderItem>> getRunningOrderItems() async {
+    await ensureRunningOrderTab();
+    final rows = await _readRange('RunningOrder!A2:E');
+    return rows
+        .asMap()
+        .entries
+        .where((e) => e.value.length > 3 && e.value[3].isNotEmpty)
+        .map((e) => RunningOrderItem.fromSheetRow(e.value, e.key + 2))
+        .toList();
+  }
+
+  Future<void> addRunningOrderItem(RunningOrderItem item) =>
+      _appendRow('RunningOrder', item.toSheetRow());
+
+  Future<void> updateRunningOrderItem(RunningOrderItem item) =>
+      _updateRow('RunningOrder', item.rowNumber, item.toSheetRow());
+
+  Future<void> deleteRunningOrderItem(int rowNumber) =>
+      _deleteRow('RunningOrder', rowNumber);
+
+  // ─────────────────────────── TEAM / ROLES ───────────────────────────
+
+  static const _kRolesHeaders = [
+    'ID', 'Name', 'Phone', 'RoleTitle', 'Duties', 'LinkedVendorCategory',
+    'PullsDietary'
+  ];
+
+  Future<void> ensureRolesTab() =>
+      _ensureTabExists('Roles', _kRolesHeaders);
+
+  Future<List<TeamMember>> getTeamMembers() async {
+    await ensureRolesTab();
+    final rows = await _readRange('Roles!A2:G');
+    return rows
+        .asMap()
+        .entries
+        .where((e) => e.value.length > 1 && e.value[1].isNotEmpty)
+        .map((e) => TeamMember.fromSheetRow(e.value, e.key + 2))
+        .toList();
+  }
+
+  Future<void> addTeamMember(TeamMember member) =>
+      _appendRow('Roles', member.toSheetRow());
+
+  Future<void> updateTeamMember(TeamMember member) =>
+      _updateRow('Roles', member.rowNumber, member.toSheetRow());
+
+  Future<void> deleteTeamMember(int rowNumber) =>
+      _deleteRow('Roles', rowNumber);
+
+  // ─────────────────────────── CHECKLIST ───────────────────────────
+
+  static const _kChecklistHeaders = [
+    'ID', 'Item', 'Destination', 'PersonName', 'InHand', 'Packed', 'Notes'
+  ];
+
+  Future<void> ensureChecklistTab() =>
+      _ensureTabExists('Checklist', _kChecklistHeaders);
+
+  Future<List<ChecklistItem>> getChecklistItems() async {
+    await ensureChecklistTab();
+    final rows = await _readRange('Checklist!A2:G');
+    return rows
+        .asMap()
+        .entries
+        .where((e) => e.value.length > 1 && e.value[1].isNotEmpty)
+        .map((e) => ChecklistItem.fromSheetRow(e.value, e.key + 2))
+        .toList();
+  }
+
+  Future<void> addChecklistItem(ChecklistItem item) =>
+      _appendRow('Checklist', item.toSheetRow());
+
+  Future<void> updateChecklistItem(ChecklistItem item) =>
+      _updateRow('Checklist', item.rowNumber, item.toSheetRow());
+
+  Future<void> deleteChecklistItem(int rowNumber) =>
+      _deleteRow('Checklist', rowNumber);
 }

@@ -90,6 +90,20 @@ class AppConstants {
   // Guest relation categories (built-in; custom ones live in customRelationsProvider)
   static const List<String> guestRelations = [];
 
+  // Day Of — running order phases
+  static const List<String> runningOrderPhases = [
+    'Getting Ready',
+    'Church',
+    'Reception',
+  ];
+
+  // Day Of — duty phases for team members
+  static const List<String> dutyPhases = ['Church', 'Venue', 'General'];
+
+  // Day Of — checklist destinations
+  static const String checklistChurch = 'church';
+  static const String checklistVenue = 'venue';
+
   // Dietary restriction options
   static const List<String> mealChoices = [
     'Standard',
