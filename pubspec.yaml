@@ -1,0 +1,115 @@
+name: wedding_planner_mobile
+description: A beautiful wedding planner app for iOS and Android.
+publish_to: 'none'
+version: 1.0.1+2
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Google Auth & APIs
+  google_sign_in: ^6.2.1
+  googleapis: ^13.2.0
+  googleapis_auth: ^1.6.0
+  extension_google_sign_in_as_googleapis_auth: ^2.0.12
+
+  # State Management
+  flutter_riverpod: ^2.5.1
+
+  # Navigation
+  go_router: ^14.2.7
+
+  # UI
+  percent_indicator: ^4.2.3
+  google_fonts: ^6.2.1
+  animations: ^2.0.0
+
+  # Local Storage
+  shared_preferences: ^2.2.3
+
+  # Utilities
+  uuid: ^4.4.0
+  intl: ^0.20.1
+  share_plus: ^12.0.2
+  path_provider: ^2.1.5
+
+  # Notifications
+  flutter_local_notifications: ^17.2.4
+  timezone: ^0.9.4
+  flutter_timezone: ^5.0.0
+
+  # Home screen widget
+  home_widget: ^0.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/church-01.png
+    - assets/images/reception-01.png
+
+  fonts:
+    - family: LeJourScript
+      fonts:
+        - asset: "assets/fonts/le jour script/Le Jour Script Personal Use Only.otf"
+
+    - family: CormorantGaramond
+      fonts:
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-VariableFont_wght.ttf"
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-Light.ttf"
+          weight: 300
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-Regular.ttf"
+          weight: 400
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-Medium.ttf"
+          weight: 500
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-SemiBold.ttf"
+          weight: 600
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-Bold.ttf"
+          weight: 700
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-Italic-VariableFont_wght.ttf"
+          style: italic
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-LightItalic.ttf"
+          weight: 300
+          style: italic
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-Italic.ttf"
+          weight: 400
+          style: italic
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-MediumItalic.ttf"
+          weight: 500
+          style: italic
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-SemiBoldItalic.ttf"
+          weight: 600
+          style: italic
+        - asset: "assets/fonts/commorant garamond/CormorantGaramond-BoldItalic.ttf"
+          weight: 700
+          style: italic
+
+    - family: GoogleSans
+      fonts:
+        - asset: "assets/fonts/product sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf"
+        - asset: "assets/fonts/product sans/GoogleSans-Medium.ttf"
+          weight: 500
+        - asset: "assets/fonts/product sans/GoogleSans-SemiBold.ttf"
+          weight: 600
+        - asset: "assets/fonts/product sans/GoogleSans-Bold.ttf"
+          weight: 700
+        - asset: "assets/fonts/product sans/GoogleSans-Italic-VariableFont_GRAD,opsz,wght.ttf"
+          style: italic
+        - asset: "assets/fonts/product sans/GoogleSans-MediumItalic.ttf"
+          weight: 500
+          style: italic
+        - asset: "assets/fonts/product sans/GoogleSans-SemiBoldItalic.ttf"
+          weight: 600
+          style: italic
+        - asset: "assets/fonts/product sans/GoogleSans-BoldItalic.ttf"
+          weight: 700
+          style: italic
