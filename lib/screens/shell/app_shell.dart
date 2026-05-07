@@ -1,26 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
 class AppShell extends StatelessWidget {
   final Widget child;
   final int selectedIndex;
+  final ValueChanged<int> onTabSelected;
 
   const AppShell({
     super.key,
     required this.child,
     required this.selectedIndex,
+    required this.onTabSelected,
   });
-
-  static const _routes = [
-    '/home/overview',
-    '/home/budget',
-    '/home/guests',
-    '/home/vendors',
-    '/home/timeline',
-    '/home/dayof',
-  ];
 
   static const _items = [
     _NavItem(icon: Icons.home_outlined, label: 'Home'),
@@ -38,7 +30,7 @@ class AppShell extends StatelessWidget {
       bottomNavigationBar: _PillNavBar(
         selectedIndex: selectedIndex,
         items: _items,
-        onTap: (i) => context.go(_routes[i]),
+        onTap: onTabSelected,
       ),
     );
   }

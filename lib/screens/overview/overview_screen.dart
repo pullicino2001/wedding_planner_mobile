@@ -27,7 +27,38 @@ class OverviewScreen extends ConsumerStatefulWidget {
   ConsumerState<OverviewScreen> createState() => _OverviewScreenState();
 }
 
-class _OverviewScreenState extends ConsumerState<OverviewScreen> {
+class _OverviewScreenState extends ConsumerState<OverviewScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _enterCtrl;
+  late Animation<double> _enterFade;
+  late Animation<Offset> _enterSlide;
+
+  @override
+  void initState() {
+    super.initState();
+    _enterCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    )..forward();
+    _enterFade = CurvedAnimation(
+      parent: _enterCtrl,
+      curve: Curves.easeOut,
+    );
+    _enterSlide = Tween<Offset>(
+      begin: const Offset(0, 0.04),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _enterCtrl,
+      curve: Curves.easeOutCubic,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _enterCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -59,7 +90,7 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
         (taskStats.overdue > 0 ? 1 : 0);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(
           settings?.coupleNames.isNotEmpty == true
@@ -86,7 +117,11 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
       ),
       body: isLoading
           ? const LoadingOverlay(message: 'Loading your wedding data…')
-          : RefreshIndicator(
+          : FadeTransition(
+              opacity: _enterFade,
+              child: SlideTransition(
+                position: _enterSlide,
+                child: RefreshIndicator(
               color: AppColors.primary,
               onRefresh: () async {
                 ref.read(budgetProvider.notifier).refresh();
@@ -204,6 +239,8 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
                 ],
               ),
             ),
+          ),
+        ),
     );
   }
 }

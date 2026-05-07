@@ -104,6 +104,25 @@ class AppConstants {
   static const String checklistChurch = 'church';
   static const String checklistVenue = 'venue';
 
+  // Day Of — default running order events seeded on first tab creation
+  static const List<List<String>> defaultRunningOrder = [
+    ['', '08:00', 'Getting Ready', 'Hair & makeup begins', ''],
+    ['', '09:00', 'Getting Ready', 'Photographer arrives — getting ready shots', ''],
+    ['', '10:00', 'Getting Ready', 'Bride/groom dressed and ready', ''],
+    ['', '10:30', 'Getting Ready', 'Bridal party photos at house', ''],
+    ['', '11:00', 'Getting Ready', 'Cars depart for church', ''],
+    ['', '11:30', 'Church', 'Groomsmen in position, guests seated', ''],
+    ['', '12:00', 'Church', 'Ceremony begins', ''],
+    ['', '12:45', 'Church', 'Signing of register', ''],
+    ['', '13:00', 'Church', 'Couple exit — confetti & photos outside', ''],
+    ['', '13:30', 'Church', 'Group photos — family & bridal party', ''],
+    ['', '14:30', 'Reception', 'Guests arrive at venue, drinks reception', ''],
+    ['', '15:30', 'Reception', 'Call to dinner, guests seated', ''],
+    ['', '16:00', 'Reception', 'Meal served — speeches between courses', ''],
+    ['', '19:00', 'Reception', 'First dance', ''],
+    ['', '19:30', 'Reception', 'Band / DJ begins, evening guests arrive', ''],
+  ];
+
   // Dietary restriction options
   static const List<String> mealChoices = [
     'Standard',

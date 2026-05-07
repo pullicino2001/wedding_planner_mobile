@@ -84,7 +84,7 @@ class _TimelineDetailScreenState extends ConsumerState<TimelineDetailScreen>
     final stats = ref.watch(taskStatsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Timeline & Tasks', style: AppTextStyles.appBarTitle),
         actions: [

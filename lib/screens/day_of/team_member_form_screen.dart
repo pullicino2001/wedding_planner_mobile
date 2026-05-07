@@ -3,14 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/constants/role_templates.dart';
 import '../../models/team_member.dart';
 import '../../providers/team_provider.dart';
 import '../../providers/vendors_provider.dart';
 
 class TeamMemberFormScreen extends ConsumerStatefulWidget {
   final TeamMember? existing;
+  final RoleTemplate? template;
 
-  const TeamMemberFormScreen({super.key, this.existing});
+  const TeamMemberFormScreen({super.key, this.existing, this.template});
 
   @override
   ConsumerState<TeamMemberFormScreen> createState() =>
@@ -32,12 +34,16 @@ class _TeamMemberFormScreenState
   void initState() {
     super.initState();
     final e = widget.existing;
+    final t = widget.template;
     _name = TextEditingController(text: e?.name ?? '');
     _phone = TextEditingController(text: e?.phone ?? '');
-    _roleTitle = TextEditingController(text: e?.roleTitle ?? '');
-    _duties = List.from(e?.duties ?? []);
-    _linkedVendorCategory = e?.linkedVendorCategory ?? '';
-    _pullsDietary = e?.pullsDietary ?? false;
+    // Pre-fill role title from template if no existing member
+    _roleTitle = TextEditingController(
+        text: e?.roleTitle ?? t?.title ?? '');
+    _duties = List.from(e?.duties ?? t?.defaultDuties ?? []);
+    _linkedVendorCategory =
+        e?.linkedVendorCategory ?? t?.linkedVendorCategory ?? '';
+    _pullsDietary = e?.pullsDietary ?? t?.pullsDietary ?? false;
   }
 
   @override
@@ -119,7 +125,11 @@ class _TeamMemberFormScreenState
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          isEditing ? 'Edit Person' : 'Add Person',
+          isEditing
+              ? 'Edit ${widget.template?.title ?? 'Person'}'
+              : widget.template != null
+                  ? 'Assign ${widget.template!.title}'
+                  : 'Add Person',
           style: AppTextStyles.appBarTitle,
         ),
       ),
@@ -128,6 +138,41 @@ class _TeamMemberFormScreenState
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            // Template banner — shown when pre-filling from a role template
+            if (widget.template != null && !isEditing) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.tealVibrant.withAlpha(14),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: AppColors.tealVibrant.withAlpha(60)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(widget.template!.icon,
+                        size: 18, color: AppColors.tealVibrant),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(widget.template!.title,
+                              style: AppTextStyles.labelLarge
+                                  .copyWith(color: AppColors.tealVibrant)),
+                          Text(
+                            '${widget.template!.defaultDuties.length} duties pre-filled — edit as needed',
+                            style: AppTextStyles.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
             TextFormField(
               controller: _name,
               decoration:

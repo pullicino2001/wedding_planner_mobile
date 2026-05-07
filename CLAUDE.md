@@ -3,9 +3,9 @@
 ## SNAPSHOT
 **Status:** Active
 **Last worked on:** 2026-05-06
-**What works:** Full app + new Day Of tab — Schedule (running order), Team (roles + brief export), Checklist (church/venue items); all backed by Google Sheets (lazy tab creation); clean flutter analyze
-**What's broken / in progress:** Day Of untested on device
-**Next step:** Test Day Of on device; push to Firebase
+**What works:** Full app; animated blob background; splash entrance animation; overview entrance; StatefulShellRoute tab persistence fix
+**What's broken / in progress:** Untested on device
+**Next step:** Test on device; push to Firebase
 
 ## DECISIONS
 - Japandi × Material You design system: teal palette, Cormorant Garamond + GoogleSans, 28px cards, pill nav
@@ -18,6 +18,8 @@
 - Day Of brief export: plain text via share_plus (more practical than image for WhatsApp/email)
 
 ## LOG
+- 2026-05-06 Animated blob background; splash + overview entrance animations; tab persistence fix
+- 2026-05-06 Schedule table view + 15 default events; PDF brief export added
 - 2026-05-06 Day Of section added — Schedule, Team, Checklist + brief export per person
 - 2026-05-03 distribute.sh + guests + settings updated
 - 2026-04-27 overview, venue detail, timeline, budget screens updated

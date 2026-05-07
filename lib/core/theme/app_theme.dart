@@ -19,7 +19,7 @@ class AppTheme {
         outline: AppColors.line,
         error: AppColors.danger,
       ),
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: Colors.transparent,
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.background,
         elevation: 0,

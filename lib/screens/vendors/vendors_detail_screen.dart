@@ -18,7 +18,7 @@ class VendorsDetailScreen extends ConsumerWidget {
     final state = ref.watch(vendorsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Vendors', style: AppTextStyles.appBarTitle),
         actions: [

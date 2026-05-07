@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -9,11 +10,22 @@ import '../../providers/guests_provider.dart';
 import '../../providers/vendors_provider.dart';
 import '../../providers/checklist_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../services/brief_pdf_service.dart';
 
-class TeamMemberBriefScreen extends ConsumerWidget {
+class TeamMemberBriefScreen extends ConsumerStatefulWidget {
   final TeamMember member;
 
   const TeamMemberBriefScreen({super.key, required this.member});
+
+  @override
+  ConsumerState<TeamMemberBriefScreen> createState() =>
+      _TeamMemberBriefScreenState();
+}
+
+class _TeamMemberBriefScreenState
+    extends ConsumerState<TeamMemberBriefScreen> {
+  TeamMember get member => widget.member;
+  bool _exportingPdf = false;
 
   // Build the plain-text brief for sharing
   String _buildBriefText(
@@ -120,8 +132,41 @@ class TeamMemberBriefScreen extends ConsumerWidget {
     return buf.toString().trim();
   }
 
+  Future<void> _exportPdf(
+    List<dynamic> guests,
+    List<dynamic> vendors,
+    List<dynamic> checklistItems,
+    String coupleNames,
+  ) async {
+    setState(() => _exportingPdf = true);
+    try {
+      final bytes = await BriefPdfService().generate(
+        member,
+        guests.cast(),
+        vendors.cast(),
+        checklistItems.cast(),
+        coupleNames,
+      );
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: '${member.name.replaceAll(' ', '_')}_brief.pdf',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('PDF export failed: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exportingPdf = false);
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final guestsState = ref.watch(guestsProvider);
     final vendorsState = ref.watch(vendorsProvider);
     final checklistState = ref.watch(checklistProvider);
@@ -145,8 +190,23 @@ class TeamMemberBriefScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.share_outlined),
             color: AppColors.tealVibrant,
+            tooltip: 'Share as text',
             onPressed: () => Share.share(briefText,
                 subject: 'Role Brief — ${member.name}'),
+          ),
+          IconButton(
+            icon: _exportingPdf
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.picture_as_pdf_outlined),
+            color: AppColors.tealVibrant,
+            tooltip: 'Export PDF',
+            onPressed: _exportingPdf
+                ? null
+                : () => _exportPdf(guests, vendors, checklistItems, coupleNames),
           ),
         ],
       ),
@@ -233,12 +293,36 @@ class TeamMemberBriefScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          // Share button
-          ElevatedButton.icon(
-            onPressed: () => Share.share(briefText,
-                subject: 'Role Brief — ${member.name}'),
-            icon: const Icon(Icons.share_outlined),
-            label: const Text('Share Brief'),
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => Share.share(briefText,
+                      subject: 'Role Brief — ${member.name}'),
+                  icon: const Icon(Icons.share_outlined),
+                  label: const Text('Share Text'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _exportingPdf
+                      ? null
+                      : () => _exportPdf(
+                          guests, vendors, checklistItems, coupleNames),
+                  icon: _exportingPdf
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('Export PDF'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

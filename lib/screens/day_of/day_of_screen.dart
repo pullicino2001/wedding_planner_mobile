@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/constants/role_templates.dart';
 import '../../models/running_order_item.dart';
 import '../../models/team_member.dart';
 import '../../models/checklist_item.dart';
@@ -52,7 +53,7 @@ class _DayOfScreenState extends ConsumerState<DayOfScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -93,62 +94,7 @@ class _DayOfScreenState extends ConsumerState<DayOfScreen>
 class _ScheduleTab extends ConsumerWidget {
   const _ScheduleTab();
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(runningOrderProvider);
-
-    return state.when(
-      loading: () => const LoadingOverlay(),
-      error: (e, _) => ErrorCard(message: e.toString()),
-      data: (items) {
-        if (items.isEmpty) {
-          return EmptyState(
-            icon: Icons.schedule_outlined,
-            title: 'No schedule yet',
-            subtitle: 'Add time slots for the day — ceremony, reception, key moments.',
-          );
-        }
-
-        // Group by phase, sort by time within each group
-        final groups = <String, List<RunningOrderItem>>{};
-        for (final phase in AppConstants.runningOrderPhases) {
-          final phaseItems = items
-              .where((i) => i.phase == phase)
-              .toList()
-            ..sort((a, b) => a.minuteOfDay.compareTo(b.minuteOfDay));
-          if (phaseItems.isNotEmpty) groups[phase] = phaseItems;
-        }
-        // Catch any items with unrecognised phases
-        final other = items
-            .where((i) => !AppConstants.runningOrderPhases.contains(i.phase))
-            .toList()
-          ..sort((a, b) => a.minuteOfDay.compareTo(b.minuteOfDay));
-        if (other.isNotEmpty) groups['Other'] = other;
-
-        return RefreshIndicator(
-          color: AppColors.tealVibrant,
-          onRefresh: () => ref.read(runningOrderProvider.notifier).refresh(),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-            children: [
-              for (final entry in groups.entries) ...[
-                _PhaseHeader(phase: entry.key),
-                ...entry.value.map((item) => _ScheduleTile(item: item)),
-                const SizedBox(height: 8),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _PhaseHeader extends StatelessWidget {
-  final String phase;
-  const _PhaseHeader({required this.phase});
-
-  Color get _color {
+  static Color _phaseColor(String phase) {
     switch (phase) {
       case 'Getting Ready':
         return AppColors.steelBlue;
@@ -161,34 +107,161 @@ class _PhaseHeader extends StatelessWidget {
     }
   }
 
+  static IconData _phaseIcon(String phase) {
+    switch (phase) {
+      case 'Getting Ready':
+        return Icons.wb_sunny_outlined;
+      case 'Church':
+        return Icons.church_outlined;
+      case 'Reception':
+        return Icons.celebration_outlined;
+      default:
+        return Icons.event_note_outlined;
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 6),
-      child: Row(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(runningOrderProvider);
+
+    return state.when(
+      loading: () => const LoadingOverlay(),
+      error: (e, _) => ErrorCard(message: e.toString()),
+      data: (items) {
+        // Group by phase, sort by time within each phase
+        final groups = <String, List<RunningOrderItem>>{};
+        for (final phase in AppConstants.runningOrderPhases) {
+          final phaseItems = items
+              .where((i) => i.phase == phase)
+              .toList()
+            ..sort((a, b) => a.minuteOfDay.compareTo(b.minuteOfDay));
+          groups[phase] = phaseItems;
+        }
+        final other = items
+            .where((i) => !AppConstants.runningOrderPhases.contains(i.phase))
+            .toList()
+          ..sort((a, b) => a.minuteOfDay.compareTo(b.minuteOfDay));
+        if (other.isNotEmpty) groups['Other'] = other;
+
+        final hasAny = groups.values.any((list) => list.isNotEmpty);
+
+        return RefreshIndicator(
+          color: AppColors.tealVibrant,
+          onRefresh: () => ref.read(runningOrderProvider.notifier).refresh(),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+            children: [
+              if (!hasAny)
+                Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: EmptyState(
+                    icon: Icons.schedule_outlined,
+                    title: 'No schedule yet',
+                    subtitle: 'Add time slots for the day — ceremony, reception, key moments.',
+                  ),
+                ),
+              for (final entry in groups.entries) ...[
+                _PhaseTable(
+                  phase: entry.key,
+                  items: entry.value,
+                  color: _phaseColor(entry.key),
+                  icon: _phaseIcon(entry.key),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PhaseTable extends ConsumerWidget {
+  final String phase;
+  final List<RunningOrderItem> items;
+  final Color color;
+  final IconData icon;
+
+  const _PhaseTable({
+    required this.phase,
+    required this.items,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Phase banner
           Container(
-            width: 4,
-            height: 16,
-            decoration: BoxDecoration(
-              color: _color,
-              borderRadius: BorderRadius.circular(2),
+            color: color.withAlpha(22),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                Icon(icon, size: 15, color: color),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    phase.toUpperCase(),
+                    style: AppTextStyles.sectionEyebrow.copyWith(color: color),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => context.push('/dayof/running-order/add'),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add, size: 13, color: color),
+                      const SizedBox(width: 2),
+                      Text(
+                        'Add',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: color,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            phase.toUpperCase(),
-            style: AppTextStyles.sectionEyebrow.copyWith(color: _color),
-          ),
+          // Rows
+          if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Text(
+                'No ${phase.toLowerCase()} events yet',
+                style: AppTextStyles.bodySmall,
+              ),
+            )
+          else
+            for (int i = 0; i < items.length; i++) ...[
+              if (i > 0)
+                Divider(height: 1, color: AppColors.line),
+              _ScheduleRow(item: items[i], color: color),
+            ],
         ],
       ),
     );
   }
 }
 
-class _ScheduleTile extends ConsumerWidget {
+class _ScheduleRow extends ConsumerWidget {
   final RunningOrderItem item;
-  const _ScheduleTile({required this.item});
+  final Color color;
+
+  const _ScheduleRow({required this.item, required this.color});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -198,46 +271,56 @@ class _ScheduleTile extends ConsumerWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: AppColors.danger.withAlpha(30),
-          borderRadius: BorderRadius.circular(14),
-        ),
+        color: AppColors.danger.withAlpha(25),
         child: const Icon(Icons.delete_outline, color: AppColors.danger),
       ),
+      confirmDismiss: (_) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Delete event?'),
+            content: Text(item.description),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text('Delete',
+                    style: TextStyle(color: AppColors.danger)),
+              ),
+            ],
+          ),
+        );
+      },
       onDismissed: (_) =>
           ref.read(runningOrderProvider.notifier).deleteItem(item),
-      child: GestureDetector(
+      child: InkWell(
         onTap: () => context.push('/dayof/running-order/edit/${item.id}',
             extra: item),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.line),
-          ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 52,
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.tealVibrant.withAlpha(18),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+              SizedBox(
+                width: 48,
                 child: Text(
-                  item.time,
+                  item.time.isEmpty ? '—' : item.time,
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.tealVibrant,
+                    color: color,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(width: 12),
+              Container(
+                width: 1,
+                height: item.notes.isNotEmpty ? 36 : 20,
+                color: AppColors.line,
+                margin: const EdgeInsets.only(right: 12),
+              ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,6 +333,8 @@ class _ScheduleTile extends ConsumerWidget {
                   ],
                 ),
               ),
+              const Icon(Icons.chevron_right,
+                  size: 16, color: AppColors.inkMute),
             ],
           ),
         ),
@@ -271,22 +356,60 @@ class _TeamTab extends ConsumerWidget {
       loading: () => const LoadingOverlay(),
       error: (e, _) => ErrorCard(message: e.toString()),
       data: (members) {
-        if (members.isEmpty) {
-          return EmptyState(
-            icon: Icons.people_outline,
-            title: 'No team members yet',
-            subtitle: 'Add groomsmen, bridesmaids, and coordinators with their duties.',
-          );
+        // Build a lookup: roleTitle (lowercase) → list of members
+        final byRole = <String, List<TeamMember>>{};
+        for (final m in members) {
+          final key = m.roleTitle.trim().toLowerCase();
+          byRole.putIfAbsent(key, () => []).add(m);
         }
+
+        // Members whose role doesn't match any template
+        final templateTitles = kRoleTemplates
+            .map((t) => t.title.toLowerCase())
+            .toSet();
+        final custom = members
+            .where((m) => !templateTitles.contains(m.roleTitle.trim().toLowerCase()))
+            .toList();
 
         return RefreshIndicator(
           color: AppColors.tealVibrant,
           onRefresh: () => ref.read(teamProvider.notifier).refresh(),
-          child: ListView.separated(
+          child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-            itemCount: members.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (_, i) => _TeamTile(member: members[i]),
+            children: [
+              for (final category in kRoleCategories) ...[
+                _CategoryHeader(label: category),
+                const SizedBox(height: 8),
+                for (final template in kRoleTemplates.where(
+                    (t) => t.category == category)) ...[
+                  _RoleSlot(
+                    template: template,
+                    assigned: byRole[template.title.toLowerCase()] ?? [],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                const SizedBox(height: 8),
+              ],
+              if (custom.isNotEmpty) ...[
+                _CategoryHeader(label: 'Other'),
+                const SizedBox(height: 8),
+                for (final member in custom) ...[
+                  _AssignedMemberTile(member: member),
+                  const SizedBox(height: 8),
+                ],
+                const SizedBox(height: 8),
+              ],
+              // Custom role add button
+              OutlinedButton.icon(
+                onPressed: () => context.push('/dayof/team/add'),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Add a custom role'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.inkMute,
+                  side: const BorderSide(color: AppColors.line),
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -294,9 +417,133 @@ class _TeamTab extends ConsumerWidget {
   }
 }
 
-class _TeamTile extends ConsumerWidget {
+class _CategoryHeader extends StatelessWidget {
+  final String label;
+  const _CategoryHeader({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label.toUpperCase(),
+      style: AppTextStyles.sectionEyebrow.copyWith(
+        color: AppColors.inkMute,
+        letterSpacing: 1.1,
+      ),
+    );
+  }
+}
+
+/// A role slot shows:
+/// - Unassigned: dashed border, muted, role title + first duty hint, "Assign" button
+/// - Assigned (1+): solid card per person; for allowMultiple also shows "Add another"
+class _RoleSlot extends ConsumerWidget {
+  final RoleTemplate template;
+  final List<TeamMember> assigned;
+
+  const _RoleSlot({required this.template, required this.assigned});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (assigned.isEmpty) {
+      return _UnassignedSlot(template: template);
+    }
+
+    return Column(
+      children: [
+        for (final member in assigned) ...[
+          _AssignedMemberTile(member: member, template: template),
+          if (member != assigned.last) const SizedBox(height: 6),
+        ],
+        if (template.allowMultiple) ...[
+          const SizedBox(height: 6),
+          _AddAnotherButton(template: template),
+        ],
+      ],
+    );
+  }
+}
+
+class _UnassignedSlot extends StatelessWidget {
+  final RoleTemplate template;
+  const _UnassignedSlot({required this.template});
+
+  @override
+  Widget build(BuildContext context) {
+    final dutyHint = template.defaultDuties.isNotEmpty
+        ? template.defaultDuties.first.description
+        : null;
+
+    return GestureDetector(
+      onTap: () => context.push('/dayof/team/add', extra: template),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.line,
+            strokeAlign: BorderSide.strokeAlignInside,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceHi,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(template.icon, size: 18, color: AppColors.inkMute),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(template.title,
+                      style: AppTextStyles.labelLarge
+                          .copyWith(color: AppColors.inkSoft)),
+                  if (dutyHint != null)
+                    Text(
+                      dutyHint,
+                      style: AppTextStyles.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.tealVibrant.withAlpha(18),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                    color: AppColors.tealVibrant.withAlpha(60)),
+              ),
+              child: Text(
+                'Assign',
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: AppColors.tealVibrant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AssignedMemberTile extends ConsumerWidget {
   final TeamMember member;
-  const _TeamTile({required this.member});
+  final RoleTemplate? template;
+
+  const _AssignedMemberTile({required this.member, this.template});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -312,12 +559,31 @@ class _TeamTile extends ConsumerWidget {
         ),
         child: const Icon(Icons.delete_outline, color: AppColors.danger),
       ),
+      confirmDismiss: (_) async => await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Remove person?'),
+          content: Text('Remove ${member.name} from the team?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child:
+                  Text('Remove', style: TextStyle(color: AppColors.danger)),
+            ),
+          ],
+        ),
+      ),
       onDismissed: (_) =>
           ref.read(teamProvider.notifier).deleteMember(member),
       child: GestureDetector(
-        onTap: () => context.push('/dayof/team/brief/${member.id}', extra: member),
+        onTap: () =>
+            context.push('/dayof/team/brief/${member.id}', extra: member),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
@@ -326,11 +592,11 @@ class _TeamTile extends ConsumerWidget {
           child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   gradient: AppColors.primaryGrad,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
                   child: Text(
@@ -340,7 +606,7 @@ class _TeamTile extends ConsumerWidget {
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
-                      fontSize: 18,
+                      fontSize: 16,
                     ),
                   ),
                 ),
@@ -351,44 +617,74 @@ class _TeamTile extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(member.name, style: AppTextStyles.labelLarge),
-                    if (member.roleTitle.isNotEmpty)
-                      Text(member.roleTitle, style: AppTextStyles.bodySmall),
+                    Text(
+                      member.roleTitle.isNotEmpty
+                          ? member.roleTitle
+                          : 'No role title',
+                      style: AppTextStyles.bodySmall,
+                    ),
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    '${member.duties.length} duties',
-                    style: AppTextStyles.labelSmall,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (member.pullsDietary)
-                        const Icon(Icons.restaurant_outlined,
-                            size: 14, color: AppColors.tealVibrant),
-                      if (member.linkedVendorCategory.isNotEmpty) ...[
-                        const SizedBox(width: 4),
-                        const Icon(Icons.store_outlined,
-                            size: 14, color: AppColors.tealVibrant),
-                      ],
-                    ],
+                  if (member.pullsDietary)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 6),
+                      child: Icon(Icons.restaurant_outlined,
+                          size: 13, color: AppColors.tealVibrant),
+                    ),
+                  if (member.linkedVendorCategory.isNotEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 6),
+                      child: Icon(Icons.store_outlined,
+                          size: 13, color: AppColors.tealVibrant),
+                    ),
+                  GestureDetector(
+                    onTap: () => context.push(
+                        '/dayof/team/edit/${member.id}',
+                        extra: member),
+                    child: const Icon(Icons.edit_outlined,
+                        size: 16, color: AppColors.inkMute),
                   ),
                 ],
               ),
-              const SizedBox(width: 4),
-              GestureDetector(
-                onTap: () => context.push(
-                    '/dayof/team/edit/${member.id}',
-                    extra: member),
-                child: const Icon(Icons.edit_outlined,
-                    size: 18, color: AppColors.inkMute),
-              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddAnotherButton extends StatelessWidget {
+  final RoleTemplate template;
+  const _AddAnotherButton({required this.template});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/dayof/team/add', extra: template),
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceHi,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.add, size: 14, color: AppColors.tealVibrant),
+            const SizedBox(width: 4),
+            Text(
+              'Add another ${template.title}',
+              style: AppTextStyles.labelSmall
+                  .copyWith(color: AppColors.tealVibrant),
+            ),
+          ],
         ),
       ),
     );

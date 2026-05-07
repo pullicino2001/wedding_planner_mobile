@@ -28,6 +28,7 @@ import '../models/task_item.dart';
 import '../models/running_order_item.dart';
 import '../models/team_member.dart';
 import '../models/checklist_item.dart';
+import '../core/constants/role_templates.dart';
 
 // ─── Router notifier (bridges Riverpod auth state → GoRouter redirects) ──────
 
@@ -68,17 +69,6 @@ final routerNotifierProvider = ChangeNotifierProvider<RouterNotifier>(
   (ref) => RouterNotifier(ref),
 );
 
-// ─── Route index helper ────────────────────────────────────────────────────
-
-int _shellIndex(String location) {
-  if (location.startsWith('/home/budget')) return 1;
-  if (location.startsWith('/home/guests')) return 2;
-  if (location.startsWith('/home/vendors')) return 3;
-  if (location.startsWith('/home/timeline')) return 4;
-  if (location.startsWith('/home/dayof')) return 5;
-  return 0; // overview
-}
-
 // ─── Router ──────────────────────────────────────────────────────────────────
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -105,37 +95,50 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const SetupScreen(),
       ),
 
-      // ── Main shell (bottom nav) ────────────────────────────────────────────
-      ShellRoute(
-        builder: (context, state, child) => AppShell(
-          selectedIndex: _shellIndex(state.matchedLocation),
-          child: child,
+      // ── Main shell (bottom nav) — StatefulShellRoute keeps all tabs mounted ──
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) => AppShell(
+          selectedIndex: navigationShell.currentIndex,
+          onTabSelected: (i) => navigationShell.goBranch(i),
+          child: navigationShell,
         ),
-        routes: [
-          GoRoute(
-            path: '/home/overview',
-            builder: (_, _) => const OverviewScreen(),
-          ),
-          GoRoute(
-            path: '/home/budget',
-            builder: (_, _) => const BudgetDetailScreen(),
-          ),
-          GoRoute(
-            path: '/home/guests',
-            builder: (_, _) => const GuestsDetailScreen(),
-          ),
-          GoRoute(
-            path: '/home/vendors',
-            builder: (_, _) => const VendorsDetailScreen(),
-          ),
-          GoRoute(
-            path: '/home/timeline',
-            builder: (_, _) => const TimelineDetailScreen(),
-          ),
-          GoRoute(
-            path: '/home/dayof',
-            builder: (_, _) => const DayOfScreen(),
-          ),
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/home/overview',
+              builder: (_, _) => const OverviewScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/home/budget',
+              builder: (_, _) => const BudgetDetailScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/home/guests',
+              builder: (_, _) => const GuestsDetailScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/home/vendors',
+              builder: (_, _) => const VendorsDetailScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/home/timeline',
+              builder: (_, _) => const TimelineDetailScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/home/dayof',
+              builder: (_, _) => const DayOfScreen(),
+            ),
+          ]),
         ],
       ),
 
@@ -206,7 +209,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/dayof/team/add',
-        builder: (_, _) => const TeamMemberFormScreen(),
+        builder: (_, state) {
+          final template = state.extra as RoleTemplate?;
+          return TeamMemberFormScreen(template: template);
+        },
       ),
       GoRoute(
         path: '/dayof/team/edit/:id',

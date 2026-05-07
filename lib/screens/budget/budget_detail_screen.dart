@@ -44,7 +44,7 @@ class BudgetDetailScreen extends ConsumerWidget {
     final hasError = budgetState.hasError;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Budget', style: AppTextStyles.appBarTitle),
         actions: [

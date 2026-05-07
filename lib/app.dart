@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/animated_blob_background.dart';
 import 'providers/router_provider.dart';
 
 class App extends ConsumerStatefulWidget {
@@ -52,6 +53,12 @@ class _AppState extends ConsumerState<App> {
       theme: AppTheme.light,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => Stack(
+        children: [
+          const AnimatedBlobBackground(),
+          child ?? const SizedBox(),
+        ],
+      ),
     );
   }
 }

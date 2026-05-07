@@ -1,5 +1,7 @@
 import 'package:googleapis/sheets/v4.dart';
 import 'package:googleapis_auth/googleapis_auth.dart' show AuthClient;
+import 'package:uuid/uuid.dart';
+import '../../core/constants/app_constants.dart';
 import '../../models/budget_item.dart';
 import '../../models/checklist_item.dart';
 import '../../models/guest.dart';
@@ -337,8 +339,13 @@ class SheetsService {
 
   /// Creates a new sheet tab with headers if it doesn't already exist.
   /// Safe to call repeatedly — is a no-op when the tab is already present.
+  /// When [defaultRows] is provided they are appended after the header row
+  /// on first creation only.
   Future<void> _ensureTabExists(
-      String tabName, List<String> headers) async {
+    String tabName,
+    List<String> headers, {
+    List<List<Object>> defaultRows = const [],
+  }) async {
     final ss = await _api.spreadsheets.get(spreadsheetId);
     final exists =
         ss.sheets?.any((s) => s.properties?.title == tabName) ?? false;
@@ -361,6 +368,16 @@ class SheetsService {
       '$tabName!A1',
       valueInputOption: 'USER_ENTERED',
     );
+
+    if (defaultRows.isNotEmpty) {
+      await _api.spreadsheets.values.append(
+        ValueRange(values: defaultRows),
+        spreadsheetId,
+        '$tabName!A2',
+        valueInputOption: 'USER_ENTERED',
+        insertDataOption: 'INSERT_ROWS',
+      );
+    }
   }
 
   // ─────────────────────────── RUNNING ORDER ───────────────────────────
@@ -369,8 +386,14 @@ class SheetsService {
     'ID', 'Time', 'Phase', 'Description', 'Notes'
   ];
 
-  Future<void> ensureRunningOrderTab() =>
-      _ensureTabExists('RunningOrder', _kRunningOrderHeaders);
+  Future<void> ensureRunningOrderTab() {
+    const uuid = Uuid();
+    final seeded = AppConstants.defaultRunningOrder
+        .map((row) => [uuid.v4(), row[1], row[2], row[3], row[4]])
+        .toList();
+    return _ensureTabExists('RunningOrder', _kRunningOrderHeaders,
+        defaultRows: seeded);
+  }
 
   Future<List<RunningOrderItem>> getRunningOrderItems() async {
     await ensureRunningOrderTab();

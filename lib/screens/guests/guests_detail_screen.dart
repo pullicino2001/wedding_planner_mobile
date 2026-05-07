@@ -177,7 +177,7 @@ class _GuestsDetailScreenState extends ConsumerState<GuestsDetailScreen> {
     // ── No guest sheet yet — show setup UI ──────────────────────────────
     if (!hasGuestSheet) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: Text('Guests', style: AppTextStyles.appBarTitle),
         ),
